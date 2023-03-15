@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if is_edit %}
+  Редактировать пост
+{% else %}  
+  Новый пост
+{% endif %}  
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 p-5">
+    <div class="card">
+      <div class="card-header"> 
+        {% if is_edit %}
+          Редактировать пост
+        {% else %}  
+          Новый пост
+        {% endif %}               
+      </div>
+      <div class="card-body">        
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}  
+            <div class="form-group row my-3 p-3">
+              <p>
+                {{ field.label }}
+                {{ field.help_text}}
+                {{ field }}
+              </p>  
+            </div>  
+          {% endfor %}  
+            <button type="submit" class="btn-primary">
+              {% if is_edit %}
+                Сохранить
+              {% else %}  
+                Добавить
+              {% endif %}  
+            </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
