@@ -18,24 +18,21 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
+            # Тестируемый текст же у меня 20 символов, больше 15
             text='Тестовый пост группы',
             group=cls.group
         )
 
     def test_correct_str(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        group = PostModelTest.group
-        str_title = group.title
-        post = PostModelTest.post
-        str_text = post.text[:15]
         testing_vars = {
-            str_title: str(group),
-            str_text: str(post),
+            str(self.group): self.group.title,
+            str(self.post): self.post.text[:15],
         }
         for field, expected_value in testing_vars.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    str(field), expected_value
+                    expected_value, field
                 )
 
     def test_help_text_post(self):
