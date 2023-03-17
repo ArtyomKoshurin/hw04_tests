@@ -18,7 +18,6 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            # Тестируемый текст же у меня 20 символов, больше 15
             text='Тестовый пост группы',
             group=cls.group
         )

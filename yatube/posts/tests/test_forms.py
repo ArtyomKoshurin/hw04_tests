@@ -26,7 +26,6 @@ class TestViewPosts(TestCase):
             author=cls.author,
             text='Тестовый пост группы',
             group=cls.group,
-            id='50'
         )
 
     def setUp(self):
@@ -44,17 +43,16 @@ class TestViewPosts(TestCase):
         form_data = {
             'text': 'Текст нового поста',
             'group': self.second_group.id,
-            'author': self.user,
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
-        new_post = Post.objects.first()
+        new_post = Post.objects.latest('id')
         self.assertEqual(new_post.text, form_data['text'])
         self.assertEqual(new_post.group.id, form_data['group'])
-        self.assertEqual(new_post.author, form_data['author'])
+        self.assertEqual(new_post.author, self.user)
         self.assertRedirects(
             response,
             reverse('posts:profile', kwargs={'username': self.user}),

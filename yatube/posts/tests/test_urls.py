@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -37,41 +36,19 @@ class PostsURLTests(TestCase):
         """Тестируем общедоступные страницы в соответствии с правами
         пользователей и их статусом входа."""
         response = {
-            self.guest_client.get(
-                reverse('posts:main_page')
-            ): HTTPStatus.OK,
-            self.guest_client.get(
-                reverse(
-                    'posts:group_list',
-                    kwargs={'any_slug': self.group.slug})
-            ): HTTPStatus.OK,
-            self.guest_client.get(
-                reverse(
-                    'posts:profile',
-                    kwargs={'username': self.author})
-            ): HTTPStatus.OK,
-            self.guest_client.get(
-                reverse(
-                    'posts:post_detail',
-                    kwargs={'post_id': self.post.id})
-            ): HTTPStatus.OK,
+            self.guest_client.get('/'): HTTPStatus.OK,
+            self.guest_client.get(f'/group/{self.group.slug}/'): HTTPStatus.OK,
+            self.guest_client.get(f'/profile/{self.user}/'): HTTPStatus.OK,
+            self.guest_client.get(f'/posts/{self.post.id}/'): HTTPStatus.OK,
             self.authorized_client.get('/create/'): HTTPStatus.OK,
             self.post_author.get(
-                reverse(
-                    'posts:post_edit',
-                    kwargs={'post_id': self.post.id})
-            ): HTTPStatus.OK,
+                f'/posts/{self.post.id}/edit/'): HTTPStatus.OK,
             self.authorized_client.get(
-                reverse(
-                    'posts:post_edit',
-                    kwargs={'post_id': self.post.id})
-            ): HTTPStatus.FOUND,
+                f'/posts/{self.post.id}/edit/'): HTTPStatus.FOUND,
             self.guest_client.get(
-                reverse(
-                    'posts:post_edit',
-                    kwargs={'post_id': self.post.id})
-            ): HTTPStatus.FOUND,
+                f'/posts/{self.post.id}/edit/'): HTTPStatus.FOUND,
             self.guest_client.get('/create/'): HTTPStatus.FOUND,
+            self.guest_client.get('/random_page/'): HTTPStatus.NOT_FOUND,
         }
         for url, response_status in response.items():
             with self.subTest(url=url):
@@ -87,35 +64,17 @@ class PostsURLTests(TestCase):
     def test_redirect_user_from_edit(self):
         """Страница edit перенаправит пользователя,
         не являющимся автором - на страницу поста."""
-        response = self.guest_client.get(
-            reverse('posts:post_edit', kwargs={'post_id': self.post.id}))
+        response = self.guest_client.get(f'/posts/{self.post.id}/edit/')
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
-
-    def test_unexisting_page(self):
-        """Проверка 404 при переходе на несуществующую страницу."""
-        response = self.guest_client.get('/random_page/')
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_templates_posts(self):
         """Тестируем шаблоны."""
         templates_urls = {
             '/': 'posts/index.html',
-            reverse(
-                'posts:group_list',
-                kwargs={'any_slug': self.group.slug}
-            ): 'posts/group_list.html',
-            reverse(
-                'posts:profile',
-                kwargs={'username': self.author}
-            ): 'posts/profile.html',
-            reverse(
-                'posts:post_detail',
-                kwargs={'post_id': self.post.id}
-            ): 'posts/post_detail.html',
-            reverse(
-                'posts:post_edit',
-                kwargs={'post_id': self.post.id}
-            ): 'posts/create_post.html',
+            f'/group/{self.group.slug}/': 'posts/group_list.html',
+            f'/profile/{self.user}/': 'posts/profile.html',
+            f'/posts/{self.post.id}/': 'posts/post_detail.html',
+            f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
             '/create/': 'posts/create_post.html',
         }
         for url, template in templates_urls.items():

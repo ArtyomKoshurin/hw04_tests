@@ -3,11 +3,14 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
-from yatube.settings import POSTS_ON_PAGE
+from django.conf import settings
 
 from ..models import Post, Group
 
 User = get_user_model()
+
+POSTS_ON_2ND_PAGE = 3
+POST_CREATE = settings.POSTS_ON_PAGE + POSTS_ON_2ND_PAGE
 
 
 class TestViewPosts(TestCase):
@@ -81,13 +84,17 @@ class TestViewPosts(TestCase):
             self.post.text: response_home.text,
             self.post.author: response_home.author,
             self.group.slug: response_home.group.slug,
+            self.post.id: response_group.id,
             self.group.title: response_group.group.title,
             self.group.description: response_group.group.description,
             self.post.text: response_group.text,
             self.post.author: response_group.author,
+            self.group.slug: response_group.group.slug,
+            self.post.id: response_profile.id,
             self.group.slug: response_profile.group.slug,
             self.post.text: response_profile.text,
             self.post.author: response_profile.author,
+            self.post.id: response_post.id,
             self.group.title: response_post.group.title,
             self.group.slug: response_post.group.slug,
             self.post.text: response_post.text,
@@ -126,13 +133,12 @@ class TestViewPosts(TestCase):
     def test_post_with_group_is_on_pages(self):
         """Тестируем наличие поста с группой на страницах"""
         response = self.authorized_client.get(
-            '/group/second_group/')
+            f'/group/{self.second_group.slug}/')
         self.assertNotIn(self.post,
                          response.context['page_obj'])
 
 
 class TestPaginator(TestCase):
-
     def setUp(self):
         self.guest_client = Client()
         self.author = User.objects.create_user(username='auth')
@@ -146,22 +152,24 @@ class TestPaginator(TestCase):
                 author=self.author,
                 text=f'Тестовый текст №{i}',
                 group=self.group,
-            ) for i in range(11)]
+            ) for i in range(POST_CREATE)]
         )
 
     def test_paginator_pages(self):
         """Тестируем работу паджинатора у главной страницы,
         страницы группы и страницы поста."""
-        POSTS_ON_2ND_PAGE = Post.objects.count() % POSTS_ON_PAGE
+
         response_values = {
             self.guest_client.get(
-                reverse('posts:main_page')): POSTS_ON_PAGE,
+                reverse('posts:main_page')): settings.POSTS_ON_PAGE,
             self.guest_client.get(
-                reverse('posts:main_page') + '?page=2'): POSTS_ON_2ND_PAGE,
+                reverse('posts:main_page') + '?page=2'
+            ): POSTS_ON_2ND_PAGE,
             self.guest_client.get(
                 reverse(
                     'posts:group_list',
-                    kwargs={'any_slug': self.group.slug})): POSTS_ON_PAGE,
+                    kwargs={'any_slug': self.group.slug})
+            ): settings.POSTS_ON_PAGE,
             self.guest_client.get(
                 reverse('posts:group_list',
                         kwargs={
@@ -169,7 +177,7 @@ class TestPaginator(TestCase):
             ): POSTS_ON_2ND_PAGE,
             self.guest_client.get(
                 reverse('posts:profile', kwargs={'username': self.author})
-            ): POSTS_ON_PAGE,
+            ): settings.POSTS_ON_PAGE,
             self.guest_client.get(
                 reverse('posts:profile',
                         kwargs={'username': self.author}) + '?page=2'
